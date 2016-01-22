@@ -2,6 +2,7 @@ package io.dev;
 
 import io.dev.someservice.api.SomeService;
 import io.dev.someservice.impl.SomeServiceVerticle;
+import io.dev.util.testing.VertxMatcherAssert;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;

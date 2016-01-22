@@ -1,12 +1,12 @@
 package io.dev;
 
 import io.dev.someservice.api.SomeService;
+import io.dev.someservice.api.Transaction;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 import org.slf4j.Logger;
@@ -20,7 +20,6 @@ import static java.lang.Integer.parseInt;
  */
 public class App extends AbstractVerticle {
   private static final Logger LOG = LoggerFactory.getLogger(App.class);
-  private Router upService;
   private SomeService someService;
 
   @Override
@@ -32,7 +31,7 @@ public class App extends AbstractVerticle {
     CorsHandler corsHandler = getCorsHandler();
     router.route().handler(corsHandler);
 
-    setupService(router);
+    setupWebService(router);
     setupStatic(router);
 
     vertx.createHttpServer().requestHandler(router::accept).listen(port, ar -> {
@@ -62,20 +61,27 @@ public class App extends AbstractVerticle {
     return StaticHandler.create(filePath);
   }
 
-  public void setupService(Router router) {
+  public void setupWebService(Router router) {
     router.post("/api/transaction").handler(rc -> {
       final JsonObject bodyAsJson = rc.getBodyAsJson();
-
-      someService.saveTransaction();
+      saveTransaction(bodyAsJson, rc.response());
     });
 
-    router.get("/api/transaction/:id").handler(rc -> {
-      int id = parseInt(rc.request().getParam("id"));
+    router.post("/api/transaction/:id").handler(rc -> {
+      String id = rc.request().getParam("id");
       retrieveTransaction(id, rc.response());
     });
   }
 
-  private void retrieveTransaction(int id, HttpServerResponse response) {
+  private void saveTransaction(JsonObject bodyAsJson, HttpServerResponse response) {
+    someService.saveTransaction(new Transaction(bodyAsJson), saveResult -> {
+      response
+        .putHeader("Content-Type", "application/json")
+        .end(new JsonObject().put("id", saveResult.result()).toString());
+    });
+  }
+
+  private void retrieveTransaction(String id, HttpServerResponse response) {
     someService.getTransaction(id, tx -> {
       if (tx.failed()) {
         response

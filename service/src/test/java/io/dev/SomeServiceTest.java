@@ -6,6 +6,7 @@ import io.dev.someservice.impl.SomeServiceVerticle;
 import io.dev.util.db.AbstractTestWithMongoDB;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -22,7 +23,7 @@ import static org.hamcrest.number.IsCloseTo.closeTo;
  * Unit test for simple App.
  */
 @RunWith(VertxUnitRunner.class)
-public class ServiceTest extends AbstractTestWithMongoDB {
+public class SomeServiceTest extends AbstractTestWithMongoDB {
   private static final double EPSILON = 0.000_000_000_1;
 
   private Vertx vertx;
@@ -30,11 +31,13 @@ public class ServiceTest extends AbstractTestWithMongoDB {
 
   @Before
   public void setup(TestContext testContext) {
-    this.vertx = Vertx.vertx();
+    VertxOptions vertxOptions = new VertxOptions().setBlockedThreadCheckInterval(Integer.MAX_VALUE);
+    this.vertx = Vertx.vertx(vertxOptions);
     Async async = testContext.async();
 
     JsonObject config = new JsonObject()
-      .put(SomeService.CONFIG_MONGO_DB, new JsonObject().put(SomeService.CONFIG_MONGO_DB_CONNECTION_STRING, getMongoDBConnectionString()));
+      .put(SomeService.CONFIG_MONGO_DB, new JsonObject()
+        .put(SomeService.CONFIG_MONGO_DB_CONNECTION_STRING, getMongoDBConnectionString()));
 
     final DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(config);
     // deploy the service
@@ -51,9 +54,12 @@ public class ServiceTest extends AbstractTestWithMongoDB {
 
   @Test
   public void checkTransactionCanBeSavedAndGot(TestContext testContext) {
+    int amount = 5;
+    String from = "jim";
+    String to = "sally";
 
     Async async = testContext.async();
-    Transaction transaction = new Transaction("jim", "sally", 5);
+    Transaction transaction = new Transaction(from, to, amount);
     someService.saveTransaction(transaction, saveResult -> {
       testContext.assertTrue(saveResult.succeeded());
       String id = saveResult.result();
@@ -61,8 +67,8 @@ public class ServiceTest extends AbstractTestWithMongoDB {
         testContext.assertTrue(readResult.succeeded());
         Transaction tx = readResult.result();
 
-        assertThat(testContext, tx.getAmount(), closeTo(10.0, EPSILON));
-        assertThat(testContext, tx.getId(), equalTo(1));
+        assertThat(testContext, tx.getAmount(), closeTo(amount, EPSILON));
+        assertThat(testContext, tx.getId(), equalTo(id));
 
         async.complete();
       });

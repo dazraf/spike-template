@@ -4,6 +4,7 @@ import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodProcess;
 import de.flapdoodle.embed.mongo.MongodStarter;
 import de.flapdoodle.embed.mongo.config.IMongodConfig;
+import de.flapdoodle.embed.mongo.config.MongoCmdOptionsBuilder;
 import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import org.junit.After;
@@ -25,14 +26,18 @@ public abstract class AbstractTestWithMongoDB {
   @Before
   public void createDB() throws IOException {
     LOG.info("Starting mongo db");
-    IMongodConfig mongodConfig = new MongodConfigBuilder().version(Version.Main.PRODUCTION).build();
+    IMongodConfig mongodConfig = new MongodConfigBuilder()
+      .version(Version.Main.PRODUCTION)
+      .cmdOptions(new MongoCmdOptionsBuilder()
+        .build())
+      .build();
 
     MongodStarter runtime = MongodStarter.getDefaultInstance();
 
     MongodExecutable mongodExecutable = runtime.prepare(mongodConfig);
     this.mongod = mongodExecutable.start();
 
-    this.mongoDBPort= mongodConfig.net().getPort();
+    this.mongoDBPort = mongodConfig.net().getPort();
     LOG.info("Started mongo db on {}", mongoDBPort);
   }
 

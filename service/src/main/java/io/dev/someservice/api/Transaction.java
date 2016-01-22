@@ -2,6 +2,7 @@ package io.dev.someservice.api;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
+import org.bson.Document;
 
 /**
  * a data object for our api
@@ -9,7 +10,7 @@ import io.vertx.core.json.JsonObject;
  */
 @DataObject
 public class Transaction {
-  public static String FIELD_ID = "id";
+  public static String FIELD_ID = "_id";
   public static String FIELD_AMOUNT = "amount";
   public static String FIELD_FROM = "from";
   public static String FIELD_TO = "to";
