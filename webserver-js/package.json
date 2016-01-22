@@ -1,0 +1,16 @@
+{
+  "private": true,
+  "name": "webservice",
+  "version": "1.0.0",
+  "description": "npm capability",
+  "main": "app.js",
+  "scripts": {
+    "start": "./node_modules/.bin/vertx run app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "vertx3-full": "^3.1.0"
+  }
+}
