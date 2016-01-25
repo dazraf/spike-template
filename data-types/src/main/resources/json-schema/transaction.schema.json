@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Transaction",
+  "id": "http://dev.io",
+  "type": "object",
+  "properties": {
+    "type": {
+      "id": "http://dev.io/type",
+      "type": "string",
+      "pattern": "^Transaction$"
+    },
+    "id": {
+      "id": "http://dev.io/id",
+      "type": "string"
+    },
+    "from": {
+      "id": "http://dev.io/from",
+      "type": "string"
+    },
+    "to": {
+      "id": "http://dev.io/to",
+      "type": "string"
+    },
+    "amount": {
+      "id": "http://dev.io/amount",
+      "type": "number"
+    }
+  },
+  "required": [
+    "id",
+    "from",
+    "to",
+    "amount"
+  ]
+}

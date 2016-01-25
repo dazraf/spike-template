@@ -63,11 +63,13 @@ public class App extends AbstractVerticle {
 
   public void setupWebService(Router router) {
     router.post("/api/transaction").handler(rc -> {
-      final JsonObject bodyAsJson = rc.getBodyAsJson();
-      saveTransaction(bodyAsJson, rc.response());
+      rc.request().bodyHandler(body -> {
+        final JsonObject bodyAsJson = body.toJsonObject();
+        saveTransaction(bodyAsJson, rc.response());
+      });
     });
 
-    router.post("/api/transaction/:id").handler(rc -> {
+    router.get("/api/transaction/:id").handler(rc -> {
       String id = rc.request().getParam("id");
       retrieveTransaction(id, rc.response());
     });

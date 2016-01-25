@@ -1,0 +1,1 @@
+These are utilities for automated testing (with Junit etc).

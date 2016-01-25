@@ -1,0 +1,7 @@
+{
+  "_type": "Transaction",
+  "bookingDateTime": "2015-01-20T18:25:43.511Z",
+  "from": "Sally",
+  "to": "Jim",
+  "amount": 5.5
+}

@@ -10,7 +10,7 @@
 
   <artifactId>webserver-java</artifactId>
 
-  <name>ws-java</name>
+  <name>webserver-java</name>
   <description>A simple webserver</description>
 
   <properties>

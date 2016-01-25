@@ -1,7 +1,9 @@
 package io.dev;
 
 import io.dev.someservice.api.SomeService;
+import io.dev.someservice.api.Transaction;
 import io.dev.someservice.impl.SomeServiceVerticle;
+import io.dev.util.db.AbstractTestWithMongoDB;
 import io.dev.util.testing.VertxMatcherAssert;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
@@ -26,7 +28,7 @@ import static org.hamcrest.number.IsCloseTo.closeTo;
  * Unit test for simple App.
  */
 @RunWith(VertxUnitRunner.class)
-public class AppTest {
+public class AppTest extends AbstractTestWithMongoDB {
   private static final int SERVICE_PORT = 8080;
   private static final double EPSILON = 0.000_000_000_1;
   private Vertx vertx;
@@ -37,8 +39,14 @@ public class AppTest {
     this.vertx = Vertx.vertx();
     Async async = testContext.async();
 
+    JsonObject config = new JsonObject()
+      .put(SomeService.CONFIG_MONGO_DB, new JsonObject()
+        .put(SomeService.CONFIG_MONGO_DB_CONNECTION_STRING, getMongoDBConnectionString()));
+
+    final DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(config);
+
     // deploy the service
-    vertx.deployVerticle(new SomeServiceVerticle(), deployService -> {
+    vertx.deployVerticle(new SomeServiceVerticle(), deploymentOptions, deployService -> {
       testContext.assertTrue(deployService.succeeded());
       vertx.deployVerticle(new App(), new DeploymentOptions().setConfig(new JsonObject().put("port", SERVICE_PORT)), deployApp -> {
         testContext.assertTrue(deployApp.succeeded());
@@ -52,18 +60,34 @@ public class AppTest {
     Async async = testContext.async();
     final HttpClient httpClient = vertx.createHttpClient(new HttpClientOptions().setDefaultHost("localhost").setDefaultPort(SERVICE_PORT));
 
-    int ID = 1;
-    httpClient.get("/api/transaction/" + ID).handler(clientResponse -> {
-      assertThat(testContext, clientResponse.statusCode(), allOf(greaterThanOrEqualTo(200), lessThan(300)));
+    double AMOUNT = 5.5;
+    Transaction transaction = new Transaction("jim", "sally", AMOUNT);
+    httpClient.post("/api/transaction/").handler(postResponse -> {
+      // POST handler
+      postResponse.bodyHandler(POST_body -> {
+        // retrieve body and get ID
+        String saved_ID = new JsonObject(POST_body.toString()).getString("id");
 
-      clientResponse.bodyHandler(buffer -> {
-        final JsonObject jsonObject = new JsonObject(buffer.toString());
-        int id = jsonObject.getInteger("id");
-        double amount = jsonObject.getDouble("amount");
-        assertThat(testContext, id, equalTo(ID));
-        assertThat(testContext, amount, closeTo(10, EPSILON));
-        async.complete();
+        // now try to retrieve it
+        httpClient.get("/api/transaction/" + saved_ID)
+          .handler(clientResponse -> {
+            // GET handler
+            assertThat(testContext, clientResponse.statusCode(), allOf(greaterThanOrEqualTo(200), lessThan(300)));
+            clientResponse.bodyHandler(GET_body -> {
+              // retrieve body
+              final JsonObject jsonObject = GET_body.toJsonObject();
+
+              // check fields are correct
+              String retrieved_ID = jsonObject.getString("_id");
+              double amount = jsonObject.getDouble("amount");
+              assertThat(testContext, retrieved_ID, equalTo(saved_ID));
+              assertThat(testContext, amount, closeTo(AMOUNT, EPSILON));
+              async.complete();
+            });
+          })
+          .end();
       });
-    }).end();
+    })
+      .end(transaction.toJson().toString());
   }
 }
